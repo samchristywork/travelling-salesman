@@ -4,6 +4,167 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Travelling Salesman Problem</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #canvas-container {
+      flex: 1;
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      cursor: crosshair;
+    }
+
+    #panel {
+      width: 220px;
+      background: #161b22;
+      border-left: 1px solid #30363d;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+
+    h1 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #58a6ff;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    .stat-group {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 3px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: #e6edf3;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: #3fb950;
+      margin-top: 4px;
+      min-height: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      background: #21262d;
+      color: #e6edf3;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+    }
+
+    button:hover { background: #30363d; border-color: #8b949e; }
+    button:active { background: #161b22; }
+
+    button.primary {
+      background: #1f6feb;
+      border-color: #1f6feb;
+      color: white;
+      font-weight: 600;
+    }
+
+    button.primary:hover { background: #388bfd; border-color: #388bfd; }
+
+    button.primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      background: #1f6feb;
+    }
+
+    button.stop {
+      background: #da3633;
+      border-color: #da3633;
+      color: white;
+      font-weight: 600;
+    }
+
+    button.stop:hover { background: #f85149; border-color: #f85149; }
+
+    button.danger { border-color: #f8514966; color: #f85149; }
+    button.danger:hover { background: #f851491a; border-color: #f85149; }
+
+    .field-label {
+      font-size: 11px;
+      color: #8b949e;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    input[type=range] {
+      width: 100%;
+      accent-color: #1f6feb;
+      cursor: pointer;
+    }
+
+    select {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      background: #21262d;
+      color: #e6edf3;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    #status {
+      font-size: 12px;
+      color: #8b949e;
+      min-height: 32px;
+      line-height: 1.5;
+    }
+
+    .status-solving { color: #f0883e; }
+    .status-done { color: #3fb950; }
+    .status-error { color: #f85149; }
+
+    hr {
+      border: none;
+      border-top: 1px solid #21262d;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #484f58;
+      line-height: 1.6;
+      margin-top: auto;
+    }
+  </style>
 </head>
 <body>
 
