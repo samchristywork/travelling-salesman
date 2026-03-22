@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travelling Salesman Problem</title>
+</head>
+<body>
+
+<div id="canvas-container">
+  <canvas id="canvas"></canvas>
+</div>
+
+<div id="panel">
+  <h1>TSP Visualizer</h1>
+
+  <div class="stat-group">
+    <div class="stat-label">Cities</div>
+    <div class="stat-value" id="city-count">0</div>
+  </div>
+
+  <div class="stat-group">
+    <div class="stat-label">Tour Length</div>
+    <div class="stat-value" id="tour-length">—</div>
+    <div class="stat-sub" id="improvement"></div>
+  </div>
+
+  <hr>
+
+  <div>
+    <div class="field-label">
+      <span>Random cities</span>
+      <span id="n-cities-val">20</span>
+    </div>
+    <input type="range" id="n-cities" min="3" max="150" value="20">
+  </div>
+
+  <button id="btn-random">Add Random Cities</button>
+
+  <hr>
+
+  <div>
+    <div class="field-label"><span>Algorithm</span></div>
+    <select id="algorithm">
+      <option value="nn">Nearest Neighbor</option>
+      <option value="nn2opt" selected>NN + 2-opt</option>
+    </select>
+  </div>
+
+  <div>
+    <div class="field-label">
+      <span>Speed</span>
+      <span id="speed-val">Fast</span>
+    </div>
+    <input type="range" id="speed" min="0" max="4" value="3">
+  </div>
+
+  <button class="primary" id="btn-solve">Solve</button>
+
+  <div id="status">Click the canvas to add cities</div>
+
+  <hr>
+
+  <button class="danger" id="btn-clear">Clear All</button>
+
+  <p class="hint">Click the canvas to place cities. Drag the sliders to control city count and animation speed.</p>
+</div>
+
+</body>
+</html>
