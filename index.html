@@ -66,5 +66,108 @@
   <p class="hint">Click the canvas to place cities. Drag the sliders to control city count and animation speed.</p>
 </div>
 
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const container = document.getElementById('canvas-container');
+
+const cityCountEl   = document.getElementById('city-count');
+const tourLengthEl  = document.getElementById('tour-length');
+const improvementEl = document.getElementById('improvement');
+const statusEl      = document.getElementById('status');
+const nCitiesSlider = document.getElementById('n-cities');
+const nCitiesVal    = document.getElementById('n-cities-val');
+const speedSlider   = document.getElementById('speed');
+const speedValEl    = document.getElementById('speed-val');
+const btnSolve      = document.getElementById('btn-solve');
+const btnRandom     = document.getElementById('btn-random');
+const btnClear      = document.getElementById('btn-clear');
+const algoSelect    = document.getElementById('algorithm');
+
+// ms delay between animation steps; 0 = max speed (many steps/frame)
+const SPEEDS       = [600, 120, 30, 8, 0];
+const SPEED_LABELS = ['Slow', 'Normal', 'Fast', 'Turbo', 'Max'];
+
+let cities = [];
+let tour   = [];
+let solving = false;
+let timer   = null;
+
+let bestLength    = Infinity;
+let initialLength = Infinity;
+let swapHighlight = null;  // { i, j } indices into tour
+let swapTime      = 0;
+
+function resize() {
+  canvas.width  = container.clientWidth;
+  canvas.height = container.clientHeight;
+  draw();
+}
+window.addEventListener('resize', resize);
+resize();
+
+nCitiesSlider.addEventListener('input', () => {
+  nCitiesVal.textContent = nCitiesSlider.value;
+});
+
+speedSlider.addEventListener('input', () => {
+  speedValEl.textContent = SPEED_LABELS[speedSlider.value];
+});
+
+canvas.addEventListener('click', e => {
+  if (solving) return;
+  const rect = canvas.getBoundingClientRect();
+  cities.push({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  tour = [];
+  bestLength = initialLength = Infinity;
+  updateStats();
+  draw();
+  statusEl.textContent = `${cities.length} cit${cities.length === 1 ? 'y' : 'ies'} placed`;
+  statusEl.className = '';
+});
+
+btnRandom.addEventListener('click', () => {
+  if (solving) return;
+  const n = parseInt(nCitiesSlider.value);
+  const margin = 50;
+  cities = Array.from({ length: n }, () => ({
+    x: margin + Math.random() * (canvas.width  - margin * 2),
+    y: margin + Math.random() * (canvas.height - margin * 2),
+  }));
+  tour = [];
+  bestLength = initialLength = Infinity;
+  updateStats();
+  draw();
+  statusEl.textContent = `${n} cities placed`;
+  statusEl.className = '';
+});
+
+btnClear.addEventListener('click', () => {
+  stopSolving();
+  cities = [];
+  tour = [];
+  bestLength = initialLength = Infinity;
+  swapHighlight = null;
+  updateStats();
+  draw();
+  statusEl.textContent = 'Click the canvas to add cities';
+  statusEl.className = '';
+});
+
+btnSolve.addEventListener('click', () => {
+  if (solving) {
+    stopSolving();
+    statusEl.textContent = 'Stopped early.';
+    statusEl.className = '';
+    return;
+  }
+  if (cities.length < 2) {
+    statusEl.textContent = 'Add at least 2 cities first.';
+    statusEl.className = 'status-error';
+    return;
+  }
+  startSolving();
+});
+</script>
 </body>
 </html>
