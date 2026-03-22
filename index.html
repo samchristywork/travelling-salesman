@@ -203,6 +203,7 @@
   <div>
     <div class="field-label"><span>Algorithm</span></div>
     <select id="algorithm">
+      <option value="random">Random</option>
       <option value="nn">Nearest Neighbor</option>
       <option value="nn2opt" selected>NN + 2-opt</option>
     </select>
@@ -358,6 +359,15 @@ function tourLength(t) {
   return len;
 }
 
+function randomTour() {
+  const t = Array.from({ length: cities.length }, (_, i) => i);
+  for (let i = t.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [t[i], t[j]] = [t[j], t[i]];
+  }
+  return t;
+}
+
 function nearestNeighbor() {
   const n = cities.length;
   const visited = new Uint8Array(n);
@@ -418,6 +428,17 @@ function startSolving() {
   btnSolve.textContent = 'Stop';
   btnSolve.className = 'stop';
   swapHighlight = null;
+
+  if (algoSelect.value === 'random') {
+    tour = randomTour();
+    bestLength = initialLength = tourLength(tour);
+    updateStats();
+    draw();
+    stopSolving();
+    statusEl.textContent = 'Done — random tour.';
+    statusEl.className = 'status-done';
+    return;
+  }
 
   statusEl.textContent = 'Building nearest-neighbor tour…';
   statusEl.className = 'status-solving';
