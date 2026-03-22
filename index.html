@@ -337,6 +337,109 @@ function finishSolving() {
   statusEl.className = 'status-done';
   draw(performance.now());
 }
+
+function draw(now) {
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  // Subtle grid
+  ctx.strokeStyle = '#161b22';
+  ctx.lineWidth = 1;
+  const gs = 48;
+  for (let x = 0; x < w; x += gs) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y < h; y += gs) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+
+  // Tour edges
+  if (tour.length > 1) {
+    const n = tour.length;
+    const highlightAge = (now && swapHighlight) ? now - swapTime : Infinity;
+    const hlAlpha = Math.max(0, 1 - highlightAge / 500);
+
+    for (let i = 0; i < n; i++) {
+      const a = cities[tour[i]];
+      const b = cities[tour[(i + 1) % n]];
+
+      let highlighted = false;
+      if (swapHighlight && hlAlpha > 0) {
+        const { i: si, j: sj } = swapHighlight;
+        if (i === si || i === sj || i === si + 1 || (i + 1) % n === sj) highlighted = true;
+      }
+
+      if (highlighted) {
+        ctx.strokeStyle = `rgba(56, 189, 248, ${0.4 + 0.6 * hlAlpha})`;
+        ctx.lineWidth = 2.5;
+      } else {
+        ctx.strokeStyle = '#388bfd66';
+        ctx.lineWidth = 1.5;
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+
+    // Direction arrows on a few edges (sparse, only when not too many cities)
+    if (cities.length <= 40 && !solving) {
+      ctx.fillStyle = '#388bfd99';
+      for (let i = 0; i < n; i += Math.max(1, Math.floor(n / 12))) {
+        const a = cities[tour[i]];
+        const b = cities[tour[(i + 1) % n]];
+        drawArrow(a, b);
+      }
+    }
+  }
+
+  // Cities
+  for (let i = 0; i < cities.length; i++) {
+    const c = cities[i];
+
+    // Glow
+    const grd = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 12);
+    grd.addColorStop(0, '#388bfd33');
+    grd.addColorStop(1, 'transparent');
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 12, 0, Math.PI * 2);
+    ctx.fillStyle = grd;
+    ctx.fill();
+
+    // Dot
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#58a6ff';
+    ctx.fill();
+    ctx.strokeStyle = '#e6edf3cc';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Empty-state hint
+  if (cities.length === 0) {
+    ctx.fillStyle = '#30363d';
+    ctx.font = '500 18px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('Click to place cities', w / 2, h / 2);
+    ctx.font = '13px system-ui';
+    ctx.fillStyle = '#484f58';
+    ctx.fillText('or use "Add Random Cities" in the panel', w / 2, h / 2 + 30);
+    ctx.textAlign = 'left';
+  }
+}
+
+function drawArrow(a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len < 20) return;
+  const mx = a.x + dx * 0.5, my = a.y + dy * 0.5;
+  const ux = dx / len, uy = dy / len;
+  const s = 6;
+  ctx.beginPath();
+  ctx.moveTo(mx + ux * s, my + uy * s);
+  ctx.lineTo(mx - ux * s - uy * s * 0.6, my - uy * s + ux * s * 0.6);
+  ctx.lineTo(mx - ux * s + uy * s * 0.6, my - uy * s - ux * s * 0.6);
+  ctx.closePath();
+  ctx.fill();
+}
 </script>
 </body>
 </html>
