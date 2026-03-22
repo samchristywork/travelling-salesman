@@ -168,6 +168,175 @@ btnSolve.addEventListener('click', () => {
   }
   startSolving();
 });
+
+function updateStats() {
+  cityCountEl.textContent = cities.length;
+  if (tour.length > 0 && bestLength < Infinity) {
+    tourLengthEl.textContent = Math.round(bestLength).toLocaleString();
+    if (initialLength < Infinity && bestLength < initialLength - 0.5) {
+      const pct = ((initialLength - bestLength) / initialLength * 100).toFixed(1);
+      improvementEl.textContent = `${pct}% improvement via 2-opt`;
+    } else if (tour.length > 0) {
+      improvementEl.textContent = 'Nearest neighbor solution';
+    }
+  } else {
+    tourLengthEl.textContent = '—';
+    improvementEl.textContent = '';
+  }
+}
+
+function dist(a, b) {
+  const dx = a.x - b.x, dy = a.y - b.y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function tourLength(t) {
+  let len = 0;
+  const n = t.length;
+  for (let i = 0; i < n; i++) len += dist(cities[t[i]], cities[t[(i + 1) % n]]);
+  return len;
+}
+
+function nearestNeighbor() {
+  const n = cities.length;
+  const visited = new Uint8Array(n);
+  // Start from a random city
+  const start = Math.floor(Math.random() * n);
+  const t = [start];
+  visited[start] = 1;
+  for (let step = 1; step < n; step++) {
+    const last = t[t.length - 1];
+    let best = -1, bd = Infinity;
+    for (let j = 0; j < n; j++) {
+      if (!visited[j]) {
+        const d = dist(cities[last], cities[j]);
+        if (d < bd) { bd = d; best = j; }
+      }
+    }
+    t.push(best);
+    visited[best] = 1;
+  }
+  return t;
+}
+
+function* twoOptGen(t) {
+  const n = t.length;
+  let improved = true;
+  while (improved) {
+    improved = false;
+    for (let i = 0; i < n - 1; i++) {
+      for (let j = i + 2; j < n; j++) {
+        if (i === 0 && j === n - 1) continue;
+        const a = t[i], b = t[i + 1], c = t[j], d = t[(j + 1) % n];
+        const before = dist(cities[a], cities[b]) + dist(cities[c], cities[d]);
+        const after  = dist(cities[a], cities[c]) + dist(cities[b], cities[d]);
+        if (after < before - 0.001) {
+          // Reverse segment [i+1 .. j]
+          let l = i + 1, r = j;
+          while (l < r) { [t[l], t[r]] = [t[r], t[l]]; l++; r--; }
+          improved = true;
+          yield { i, j };
+        }
+      }
+    }
+  }
+}
+
+let gen = null;
+
+function stopSolving() {
+  solving = false;
+  clearTimeout(timer);
+  timer = null;
+  btnSolve.textContent = 'Solve';
+  btnSolve.className = 'primary';
+}
+
+function startSolving() {
+  solving = true;
+  btnSolve.textContent = 'Stop';
+  btnSolve.className = 'stop';
+  swapHighlight = null;
+
+  statusEl.textContent = 'Building nearest-neighbor tour…';
+  statusEl.className = 'status-solving';
+
+  tour = nearestNeighbor();
+  bestLength = initialLength = tourLength(tour);
+  updateStats();
+  draw();
+
+  if (algoSelect.value === 'nn') {
+    stopSolving();
+    statusEl.textContent = 'Done — nearest-neighbor solution.';
+    statusEl.className = 'status-done';
+    return;
+  }
+
+  statusEl.textContent = 'Running 2-opt optimization…';
+  gen = twoOptGen(tour);
+  scheduleStep();
+}
+
+function scheduleStep() {
+  const delay = SPEEDS[speedSlider.value];
+  if (delay === 0) {
+    // Run many steps synchronously then yield to browser
+    timer = requestAnimationFrame(runBatch);
+  } else {
+    timer = setTimeout(() => requestAnimationFrame(runOne), delay);
+  }
+}
+
+function runBatch() {
+  if (!solving) return;
+  // Run up to N steps per animation frame at max speed
+  const BATCH = 80;
+  let last = null;
+  let done = false;
+  for (let s = 0; s < BATCH && !done; s++) {
+    const { value, done: d } = gen.next();
+    done = d;
+    if (value) last = value;
+  }
+  if (last) {
+    swapHighlight = last;
+    swapTime = performance.now();
+    bestLength = tourLength(tour);
+    updateStats();
+  }
+  draw(performance.now());
+  if (done) {
+    finishSolving();
+  } else {
+    scheduleStep();
+  }
+}
+
+function runOne() {
+  if (!solving) return;
+  const { value, done } = gen.next();
+  if (value) {
+    swapHighlight = value;
+    swapTime = performance.now();
+    bestLength = tourLength(tour);
+    updateStats();
+  }
+  draw(performance.now());
+  if (done) {
+    finishSolving();
+  } else {
+    scheduleStep();
+  }
+}
+
+function finishSolving() {
+  stopSolving();
+  swapHighlight = null;
+  statusEl.textContent = '2-opt complete — local optimum reached.';
+  statusEl.className = 'status-done';
+  draw(performance.now());
+}
 </script>
 </body>
 </html>
